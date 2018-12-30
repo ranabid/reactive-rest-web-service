@@ -1,0 +1,30 @@
+spring:
+  profiles:
+    active: local
+
+environments: local
+url: http://localhost.com:8080
+name: Developer local
+
+app:
+  app-id: 148531
+  app-password: wr8j28jcicc3ii96
+  env: UAT1
+  context: #GrandPrix#
+  contest-version: 3
+  other-app: 4237
+  oneTimeToken: false
+  timeToLive: 600000
+  auth-provider: idms
+  idms-auth-endpoints:
+    base-url: http://localhost.com:8080
+    generate-uri: /apptoapp/token/generate
+    validate-uri: /apptoapp/token/validate
+    http-headers:
+      HTTP_HEADER_SSP_ESP_ENVIRONMENT: ${app.env}
+      HTTP_HEADER_SSP_CONSUMER_ID: ${app.id}
+      HTTP_HEADER_SSP_SERVICE_NAME: GrandPrix
+      HTTP_HEADER_SSP_ESP_CLIENT_VERSION: 
+      HTTP_HEADER_SSP_SERVICE_VER:
+      HTTP_HEADER_SSP_INPUT_DATA_FORMAT: ESP_JSON
+      HTTP_HEADER_SSP_OUTPUT_DATA:
