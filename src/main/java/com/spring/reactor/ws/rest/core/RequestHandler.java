@@ -1,4 +1,4 @@
-package com.spring.reactor.ws.rest;
+package com.spring.reactor.ws.rest.core;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;

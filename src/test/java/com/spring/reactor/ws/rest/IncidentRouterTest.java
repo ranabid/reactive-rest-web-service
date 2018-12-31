@@ -24,6 +24,8 @@ public class IncidentRouterTest {
 			.accept(MediaType.APPLICATION_JSON)
 			.exchange()
 			.expectStatus().isOk()
-			.expectBody(String.class).isEqualTo("{\"INC12345\":{\"title\": \"Auto Alert\",\"configurtion\": \"genesys\" }}");
+			.expectBody(String.class).isEqualTo("{"
+					+"\"token\": \"DBG&FRDT%$^_HYUJHGrfse453&^52\""
+					+"}");
 	}
 }

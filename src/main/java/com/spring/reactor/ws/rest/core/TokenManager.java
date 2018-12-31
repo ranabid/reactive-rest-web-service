@@ -1,4 +1,4 @@
-package com.spring.reactor.ws.rest;
+package com.spring.reactor.ws.rest.core;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -8,61 +8,69 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.reactor.ws.rest.common.ApplicationProperties;
 
-public class TokenCacheManager {
+public class TokenManager {
 
-	@Autowired
-	private ApplicationProperties prop;
+	private static ApplicationProperties prop;
+
 	private final LocalDateTime currentDateTimeUTC;
-	private static final Logger LOGGER = LoggerFactory.getLogger(TokenCacheManager.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TokenManager.class);
 	private Map<String, String> tokenCache;
 	private final DateTimeFormatter formatter;
 	private final HttpWebClient httpWebClient;
 
-	public TokenCacheManager() {
+	public TokenManager() {
+		LOGGER.info("Inside a constructor TokenManager");
 		this.formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		this.currentDateTimeUTC = LocalDateTime.now(Clock.systemUTC());
 		this.tokenCache = new HashMap<String, String>();
-		this.httpWebClient = new HttpWebClient("http://localhost.com:8080");
-
+		this.httpWebClient = new HttpWebClient(prop.getIdmsAuthEndpoints().getBaseUrl());
 	}
 
 	private Boolean isTokenvalid() {
+		LOGGER.info("Inside isTokenvalid");
 		boolean isValid = false;
-
-		LocalDateTime tokenTTL = LocalDateTime.parse(tokenCache.get("ttl"), formatter);
-		if (tokenTTL.compareTo(currentDateTimeUTC) <= 0) {
-			LOGGER.info("token is invalid");
-			isValid = false;
-		} else {
-			isValid = true;
+		if (!tokenCache.get("ttl").isEmpty()) {
+			LocalDateTime tokenTTL = LocalDateTime.parse(tokenCache.get("ttl"), formatter);
+			if (tokenTTL.compareTo(currentDateTimeUTC) <= 0) {
+				LOGGER.info("token is invalid");
+				isValid = false;
+			} else {
+				isValid = true;
+			}
 		}
+
 		return isValid;
 	}
 
 	private String generateNewTokenAndCache() throws Exception {
-
+		LOGGER.info("inside generateNewTokenAndCache");
 		try {
-			// String newTokenJson = this.httpWebClient.wrappedPost(tokenUri, requestBody);
-			LOGGER.debug("Calling http post");
+
+			LOGGER.info("Calling http post");
+
 			String newTokenJson = this.httpWebClient.wrappedPost(prop.getIdmsAuthEndpoints().getGenerateUri(),
 					this.new TokenRequestBody());
-			LOGGER.debug("Current time: "+getCurrentDateTimeUTC());
+
+			LOGGER.info("Current time: " + getCurrentDateTimeUTC());
 			ObjectMapper mapper = new ObjectMapper();
 			Map<String, Object> map = new HashMap<String, Object>();
 
 			map = mapper.readValue(newTokenJson, new TypeReference<Map<String, String>>() {
 			});
-			
+
 			tokenCache.put("token", map.get("token").toString());
-			tokenCache.put("ttl", this.formatter.format(this.currentDateTimeUTC
-					.plusMinutes(Integer.parseInt(prop.getTimeToLive())/60)));
-			
-			LOGGER.debug("ttl: "+tokenCache.get("ttl"));
+			tokenCache.put("ttl", this.formatter
+					.format(this.currentDateTimeUTC.plusMinutes(Integer.parseInt(prop.getTimeToLive()) / 60)));
+
+			LOGGER.info("ttl: " + tokenCache.get("ttl"));
 			return tokenCache.get("token");
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());
@@ -75,18 +83,23 @@ public class TokenCacheManager {
 	}
 
 	public String getToken() throws Exception {
+		LOGGER.info("Inside getToken");
 		try {
 			if (!this.tokenCache.isEmpty() && isTokenvalid()) {
-				LOGGER.debug("token is not empty");
+				LOGGER.info("token is not empty");
 				return tokenCache.get("token");
 			} else {
-				LOGGER.debug("getting new token");
+				LOGGER.info("getting new token");
 				return this.generateNewTokenAndCache();
 			}
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());
 			throw new Exception(ex.getMessage());
 		}
+	}
+
+	public static void setApplicationProperties(ApplicationProperties prop) {
+		TokenManager.prop = prop;
 	}
 
 	private class TokenRequestBody {
@@ -106,6 +119,43 @@ public class TokenCacheManager {
 			this.contextVersion = prop.getContextVersion();
 			this.oneTimeToken = prop.getOneTimeToken();
 			this.timeToLive = prop.getTimeToLive();
+		}
+
+		public String getAppId() {
+			return appId;
+		}
+
+		public String getAppPassword() {
+			return appPassword;
+		}
+
+		public String getContext() {
+			return context;
+		}
+
+		public String getOtherApp() {
+			return otherApp;
+		}
+
+		public String getContextVersion() {
+			return contextVersion;
+		}
+
+		public String getOneTimeToken() {
+			return oneTimeToken;
+		}
+
+		public String getTimeToLive() {
+			return timeToLive;
+		}
+
+		@Override
+		public String toString() {
+
+			return "appId: " + appId + " appPassword: " + appPassword + " context: " + context + " otherApp" + otherApp
+					+ " contextVesrion: " + contextVersion + " oneTimeToken: " + oneTimeToken + " timeToLive: "
+					+ timeToLive;
+
 		}
 
 	}

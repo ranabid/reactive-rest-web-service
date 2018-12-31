@@ -1,4 +1,4 @@
-package com.spring.reactor.ws.rest;
+package com.spring.reactor.ws.rest.core;
 
 import java.net.CookieManager;
 import java.net.CookieStore;
@@ -15,35 +15,43 @@ import org.springframework.http.client.reactive.JettyClientHttpConnector;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Mono;
 
 public class HttpWebClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpWebClient.class);
 	private final WebClient webClient;
 
 	public HttpWebClient(final String baseUrl) {
-
-		this.webClient = WebClient.builder().baseUrl(baseUrl)
+		webClient = WebClient.builder().baseUrl(baseUrl)
 				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).build();
-	}
+		}
 
-	public String wrappedGet(final String uri) throws Exception {
+	public String wrappedGet(final String endpoint) throws Exception {
 		try {
-			return this.webClient.get().uri(uri).accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(String.class)
-					.block();
-
+			LOGGER.info("inside wrappedPost");
+			LOGGER.info("request endpoint: "+endpoint);
+			Mono<ClientResponse> result = webClient.get()
+					.uri(endpoint)
+					.accept(MediaType.APPLICATION_JSON)
+					.exchange();
+				return result.flatMap(res -> res.bodyToMono(String.class)).block();
+			
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());
 			throw new Exception(ex);
 		}
 	}
 
-	public String wrappedPost(final String uri, final Object requestBody) throws Exception {
-
+	public String wrappedPost(final String endpoint, final Object requestBody) throws Exception {
+		LOGGER.info("inside wrappedPost");
+		LOGGER.info("request body: "+requestBody.toString());
+		LOGGER.info("request endpoint: "+endpoint);
 		try {
-			String response = this.webClient.post().uri(URI.create(uri)).contentType(MediaType.APPLICATION_JSON)
+			return this.webClient.post().uri(endpoint).contentType(MediaType.APPLICATION_JSON)
 					.syncBody(requestBody).retrieve().bodyToMono(String.class).block();
-			return response;
 
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());

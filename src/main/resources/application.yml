@@ -1,23 +1,30 @@
 spring:
   profiles:
     active: local
+  logging:
+    level:
+      root: WARN
+      org.springframework.web: DEBUG
+      org.hibernate: ERROR
+      com.spring.reactor.ws.rest: TRACE
 
 environments: local
 url: http://localhost.com:8080
 name: Developer local
 
+
 app:
   app-id: 148531
   app-password: wr8j28jcicc3ii96
   env: UAT1
-  context: #GrandPrix#
+  context: '#GrandPrix#'
   contest-version: 3
   other-app: 4237
   oneTimeToken: false
   timeToLive: 600000
   auth-provider: idms
   idms-auth-endpoints:
-    base-url: http://localhost.com:8080
+    base-url: http://localhost:8080
     generate-uri: /apptoapp/token/generate
     validate-uri: /apptoapp/token/validate
     http-headers:

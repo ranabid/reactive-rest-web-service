@@ -1,4 +1,4 @@
-package com.spring.reactor.ws.rest;
+package com.spring.reactor.ws.rest.core;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -9,11 +9,11 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class IncidentHandler {
-	private RequestHandler requestHandler;
-	
-	public IncidentHandler(RequestHandler requestHandler) {
-		this.requestHandler = requestHandler;	
-	}
+//	private RequestHandler requestHandler;
+//	
+//	public IncidentHandler(RequestHandler requestHandler) {
+//		this.requestHandler = requestHandler;	
+//	}
 	
 	public Mono<ServerResponse> getIncidents(ServerRequest request) {
 //		String response = "{"

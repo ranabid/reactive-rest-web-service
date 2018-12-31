@@ -1,9 +1,8 @@
-package com.spring.reactor.ws.rest;
+package com.spring.reactor.ws.rest.core;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -22,14 +21,9 @@ public class IncidentRouter {
 	@Bean
 	public RouterFunction<ServerResponse> incidentRoute(IncidentHandler incidentHandler) {
 		LOGGER.info("Inside incidentRoute method");
-		return route(GET("/incident/list").and(RequestPredicates.accept(MediaType.APPLICATION_JSON)),
-				incidentHandler::getIncidents)
-						.and(route(GET("/incidents").and(RequestPredicates.accept(MediaType.APPLICATION_JSON)),
-								incidentHandler::getIncidents))
-						.and(route(
-								POST("/apptoapp/token/generate")
-										.and(RequestPredicates.accept(MediaType.APPLICATION_JSON)),
-								incidentHandler::getIncidents));
+		return route(GET("/incident/list").and(accept(MediaType.APPLICATION_JSON)), incidentHandler::getIncidents)
+				.and(route(POST("/apptoapp/token/generate").and(accept(MediaType.APPLICATION_JSON)),
+						incidentHandler::getIncidents));
 	}
 
 }
