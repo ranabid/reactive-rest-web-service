@@ -21,6 +21,5 @@ public class ReactiveRestWebServiceApplication implements CommandLineRunner {
 		TokenManager tokenManager = new TokenManager();
 		String result = tokenManager.getToken();
 		LOGGER.info(result);
-		
 	}
 }

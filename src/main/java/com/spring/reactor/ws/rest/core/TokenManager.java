@@ -1,17 +1,14 @@
 package com.spring.reactor.ws.rest.core;
 
-import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.reactor.ws.rest.common.ApplicationProperties;
@@ -19,30 +16,29 @@ import com.spring.reactor.ws.rest.common.ApplicationProperties;
 public class TokenManager {
 
 	private static ApplicationProperties prop;
-
-	private final LocalDateTime currentDateTimeUTC;
 	private static final Logger LOGGER = LoggerFactory.getLogger(TokenManager.class);
+	private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private Map<String, String> tokenCache;
-	private final DateTimeFormatter formatter;
 	private final HttpWebClient httpWebClient;
 
 	public TokenManager() {
-		LOGGER.info("Inside a constructor TokenManager");
-		this.formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-		this.currentDateTimeUTC = LocalDateTime.now(Clock.systemUTC());
+		LOGGER.debug("Inside a constructor TokenManager");
 		this.tokenCache = new HashMap<String, String>();
 		this.httpWebClient = new HttpWebClient(prop.getIdmsAuthEndpoints().getBaseUrl());
 	}
 
-	private Boolean isTokenvalid() {
-		LOGGER.info("Inside isTokenvalid");
+	private Boolean isTokenvalid() throws Exception {
+		LOGGER.debug("Inside isTokenvalid");
+
 		boolean isValid = false;
 		if (!tokenCache.get("ttl").isEmpty()) {
+			LocalDateTime currentDateTimeGMT = LocalDateTime.parse(getCurrentDateTimeGMT(), formatter);
 			LocalDateTime tokenTTL = LocalDateTime.parse(tokenCache.get("ttl"), formatter);
-			if (tokenTTL.compareTo(currentDateTimeUTC) <= 0) {
-				LOGGER.info("token is invalid");
+			if (tokenTTL.compareTo(currentDateTimeGMT) <= 0) {
+				LOGGER.info("token is invalid at - "+tokenTTL.format(formatter)+" GMT");
 				isValid = false;
 			} else {
+				LOGGER.info("token is valid till - "+tokenTTL.format(formatter)+" GMT");
 				isValid = true;
 			}
 		}
@@ -51,26 +47,21 @@ public class TokenManager {
 	}
 
 	private String generateNewTokenAndCache() throws Exception {
-		LOGGER.info("inside generateNewTokenAndCache");
+		LOGGER.debug("inside generateNewTokenAndCache");
 		try {
 
 			LOGGER.info("Calling http post");
 
 			String newTokenJson = this.httpWebClient.wrappedPost(prop.getIdmsAuthEndpoints().getGenerateUri(),
 					this.new TokenRequestBody());
-
-			LOGGER.info("Current time: " + getCurrentDateTimeUTC());
 			ObjectMapper mapper = new ObjectMapper();
 			Map<String, Object> map = new HashMap<String, Object>();
 
 			map = mapper.readValue(newTokenJson, new TypeReference<Map<String, String>>() {
 			});
-
+			LocalDateTime currentDateTimeGMT = LocalDateTime.parse(getCurrentDateTimeGMT(), formatter).plusMinutes(10);
 			tokenCache.put("token", map.get("token").toString());
-			tokenCache.put("ttl", this.formatter
-					.format(this.currentDateTimeUTC.plusMinutes(Integer.parseInt(prop.getTimeToLive()) / 60)));
-
-			LOGGER.info("ttl: " + tokenCache.get("ttl"));
+			tokenCache.put("ttl", currentDateTimeGMT.format(formatter));
 			return tokenCache.get("token");
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());
@@ -78,12 +69,15 @@ public class TokenManager {
 		}
 	}
 
-	public String getCurrentDateTimeUTC() {
-		return this.formatter.format(currentDateTimeUTC);
+	public String getCurrentDateTimeGMT() {
+		Instant timestamp = Instant.now();
+		ZonedDateTime timestampAtGMT = timestamp.atZone(ZoneId.of("GMT"));
+		return timestampAtGMT.format(formatter);
 	}
 
 	public String getToken() throws Exception {
-		LOGGER.info("Inside getToken");
+		LOGGER.debug("Inside getToken");
+		LOGGER.info("Current time: "+getCurrentDateTimeGMT()+" GMT");
 		try {
 			if (!this.tokenCache.isEmpty() && isTokenvalid()) {
 				LOGGER.info("token is not empty");
@@ -94,7 +88,9 @@ public class TokenManager {
 			}
 		} catch (Exception ex) {
 			LOGGER.error(ex.getMessage());
+
 			throw new Exception(ex.getMessage());
+
 		}
 	}
 
@@ -102,6 +98,7 @@ public class TokenManager {
 		TokenManager.prop = prop;
 	}
 
+	@SuppressWarnings("unused")
 	private class TokenRequestBody {
 		private String appId;
 		private String appPassword;

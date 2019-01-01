@@ -31,8 +31,8 @@ public class HttpWebClient {
 
 	public String wrappedGet(final String endpoint) throws Exception {
 		try {
-			LOGGER.info("inside wrappedPost");
-			LOGGER.info("request endpoint: "+endpoint);
+			LOGGER.debug("inside wrappedPost");
+			LOGGER.debug("request endpoint: "+endpoint);
 			Mono<ClientResponse> result = webClient.get()
 					.uri(endpoint)
 					.accept(MediaType.APPLICATION_JSON)
@@ -46,9 +46,9 @@ public class HttpWebClient {
 	}
 
 	public String wrappedPost(final String endpoint, final Object requestBody) throws Exception {
-		LOGGER.info("inside wrappedPost");
-		LOGGER.info("request body: "+requestBody.toString());
-		LOGGER.info("request endpoint: "+endpoint);
+		LOGGER.debug("inside wrappedPost");
+		LOGGER.debug("request body: "+requestBody.toString());
+		LOGGER.debug("request endpoint: "+endpoint);
 		try {
 			return this.webClient.post().uri(endpoint).contentType(MediaType.APPLICATION_JSON)
 					.syncBody(requestBody).retrieve().bodyToMono(String.class).block();
